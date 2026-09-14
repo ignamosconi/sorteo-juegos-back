@@ -5,6 +5,7 @@ import { DefaultCategoryRepository } from './repositories/default-category.repos
 import { DefaultCategoryService } from './services/default-category.service.js';
 import { DefaultCategoryController } from './controllers/default-category.controller.js';
 import { DEFAULT_CATEGORY_REPOSITORY } from './repositories/interfaces/default-category.repository.interface.js';
+import { DEFAULT_CATEGORY_SERVICE } from './services/interfaces/default-category.service.interface.js';
 import { AuthGuardModule } from '../common/auth-guard.module.js';
 
 @Module({
@@ -12,8 +13,8 @@ import { AuthGuardModule } from '../common/auth-guard.module.js';
   controllers: [DefaultCategoryController],
   providers: [
     { provide: DEFAULT_CATEGORY_REPOSITORY, useClass: DefaultCategoryRepository },
-    DefaultCategoryService,
+    { provide: DEFAULT_CATEGORY_SERVICE, useClass: DefaultCategoryService },
   ],
-  exports: [DefaultCategoryService],
+  exports: [DEFAULT_CATEGORY_SERVICE],
 })
 export class DefaultCategoryModule {}

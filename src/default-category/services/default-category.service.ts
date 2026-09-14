@@ -4,12 +4,17 @@ import { CreateDefaultCategoryDto } from '../dtos/create-default-category.dto.js
 import { UpdateDefaultCategoryDto } from '../dtos/update-default-category.dto.js';
 import type { IDefaultCategoryRepository } from '../repositories/interfaces/default-category.repository.interface.js';
 import { DEFAULT_CATEGORY_REPOSITORY } from '../repositories/interfaces/default-category.repository.interface.js';
+import type { IDefaultCategoryService } from './interfaces/default-category.service.interface.js';
 
 @Injectable()
-export class DefaultCategoryService {
-  constructor(@Inject(DEFAULT_CATEGORY_REPOSITORY) private readonly repo: IDefaultCategoryRepository) {}
+export class DefaultCategoryService implements IDefaultCategoryService {
+  constructor(
+    @Inject(DEFAULT_CATEGORY_REPOSITORY) private readonly repo: IDefaultCategoryRepository,
+  ) {}
 
-  findAll(): Promise<DefaultCategoryEntity[]> { return this.repo.findAll(); }
+  findAll(): Promise<DefaultCategoryEntity[]> {
+    return this.repo.findAll();
+  }
 
   create(dto: CreateDefaultCategoryDto): Promise<DefaultCategoryEntity> {
     return this.repo.create({ name: dto.name, order: dto.order ?? 0 });
