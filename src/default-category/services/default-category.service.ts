@@ -17,7 +17,10 @@ export class DefaultCategoryService implements IDefaultCategoryService {
   }
 
   create(dto: CreateDefaultCategoryDto): Promise<DefaultCategoryEntity> {
-    return this.repo.create({ name: dto.name, order: dto.order ?? 0 });
+    return this.repo.create({
+      ...dto,
+      order: dto.order ?? 0,
+    });
   }
 
   async update(id: string, dto: UpdateDefaultCategoryDto): Promise<DefaultCategoryEntity> {
