@@ -2,7 +2,8 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import { DrawPhase, DrawStateEntity } from '../entities/draw-state.entity.js';
 import type { IDrawRepository } from '../repositories/interfaces/draw.repository.interface.js';
 import { DRAW_REPOSITORY } from '../repositories/interfaces/draw.repository.interface.js';
-import { SportService } from '../../sport/services/sport.service.js';
+import type { ISportService } from '../../sport/services/interfaces/sport.service.interface.js';
+import { SPORT_SERVICE } from '../../sport/services/interfaces/sport.service.interface.js';
 import type { IRaffleService } from '../../raffle/services/interfaces/raffle.service.interface.js';
 import { RAFFLE_SERVICE } from '../../raffle/services/interfaces/raffle.service.interface.js';
 import { RaffleEntity, RaffleStatus } from '../../raffle/entities/raffle.entity.js';
@@ -19,7 +20,7 @@ import {
 export class DrawService implements IDrawService {
   constructor(
     @Inject(DRAW_REPOSITORY) private readonly repo: IDrawRepository,
-    private readonly sportService: SportService,
+    @Inject(SPORT_SERVICE) private readonly sportService: ISportService,
     @Inject(RAFFLE_SERVICE) private readonly raffleService: IRaffleService,
   ) {}
 
