@@ -3,7 +3,7 @@ import { CreateRaffleDto } from '../../dtos/create-raffle.dto.js';
 import { UpdateRaffleDto } from '../../dtos/update-raffle.dto.js';
 
 export interface IRaffleController {
-  findAll(name?: string, sortByDate?: boolean): Promise<RaffleEntity[]>;
+  findAll(name?: string, sortByDate?: string): Promise<RaffleEntity[]>;
   findOne(id: string): Promise<RaffleEntity>;
   create(dto: CreateRaffleDto): Promise<RaffleEntity>;
   update(id: string, dto: UpdateRaffleDto): Promise<RaffleEntity>;

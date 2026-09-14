@@ -3,14 +3,16 @@ import { randomBytes } from 'crypto';
 import { RaffleEntity, RaffleStatus } from '../entities/raffle.entity.js';
 import { CreateRaffleDto } from '../dtos/create-raffle.dto.js';
 import { UpdateRaffleDto } from '../dtos/update-raffle.dto.js';
+import { GetRafflesFilterDto } from '../dtos/get-raffles-filter.dto.js';
 import type { IRaffleRepository } from '../repositories/interfaces/raffle.repository.interface.js';
 import { RAFFLE_REPOSITORY } from '../repositories/interfaces/raffle.repository.interface.js';
+import type { IRaffleService } from './interfaces/raffle.service.interface.js';
 
 @Injectable()
-export class RaffleService {
+export class RaffleService implements IRaffleService {
   constructor(@Inject(RAFFLE_REPOSITORY) private readonly repo: IRaffleRepository) {}
 
-  findAll(filters?: { name?: string; sortByDate?: boolean }): Promise<RaffleEntity[]> {
+  findAll(filters?: GetRafflesFilterDto): Promise<RaffleEntity[]> {
     return this.repo.findAll(filters);
   }
 
