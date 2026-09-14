@@ -62,7 +62,7 @@ import { FileUploadModule } from './file-upload/file-upload.module.js';
       }),
     }),
     TypeOrmModule.forFeature([AdminEntity]),
-    ThrottlerModule.forRoot([{ name: 'global', ttl: 60000, limit: 30 }]),
+    ThrottlerModule.forRoot([{ name: 'global', ttl: 60000, limit: 3000 }]),
     AdminModule,
     AdminAuthModule,
     SystemConfigModule,
