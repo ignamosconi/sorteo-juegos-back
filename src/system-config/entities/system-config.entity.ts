@@ -26,6 +26,9 @@ export class SystemConfigEntity {
   @Column({ default: 'Grupo' })
   defaultGroupPrefix!: string;
 
+  @Column({ type: 'varchar', default: 'ALPHA_UPPER' })
+  defaultGroupSequence!: string;
+
   @Column({ nullable: true, type: 'varchar' })
   publicTitle!: string | null;
 

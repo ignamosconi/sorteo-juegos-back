@@ -8,6 +8,7 @@ export class UpdateSystemConfigDto {
   @IsOptional() @IsString() publicTabName?: string;
   @IsOptional() @IsString() publicFaviconPath?: string;
   @IsOptional() @IsString() defaultGroupPrefix?: string;
+  @IsOptional() @IsString() defaultGroupSequence?: string;
   @IsOptional() @IsString() publicTitle?: string;
   @IsOptional() @IsString() publicImagePath?: string;
 }
