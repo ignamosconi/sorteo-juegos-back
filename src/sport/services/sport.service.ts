@@ -5,12 +5,15 @@ import { SportCategoryGroupEntity } from '../entities/sport-category-group.entit
 import { SportCategoryTeamEntity } from '../entities/sport-category-team.entity.js';
 import type { ISportRepository } from '../repositories/interfaces/sport.repository.interface.js';
 import { SPORT_REPOSITORY } from '../repositories/interfaces/sport.repository.interface.js';
+import type { ISportService } from './interfaces/sport.service.interface.js';
 
 @Injectable()
-export class SportService {
+export class SportService implements ISportService {
   constructor(@Inject(SPORT_REPOSITORY) private readonly repo: ISportRepository) {}
 
-  findByRaffle(raffleId: string): Promise<SportEntity[]> { return this.repo.findByRaffle(raffleId); }
+  findByRaffle(raffleId: string): Promise<SportEntity[]> {
+    return this.repo.findByRaffle(raffleId);
+  }
 
   createSport(raffleId: string, name: string, abbreviation: string, order = 0): Promise<SportEntity> {
     return this.repo.createSport({ raffleId, name, abbreviation, order });
@@ -28,7 +31,9 @@ export class SportService {
     return this.repo.deleteSport(id);
   }
 
-  findCategories(sportId: string): Promise<SportCategoryEntity[]> { return this.repo.findCategoriesBySport(sportId); }
+  findCategories(sportId: string): Promise<SportCategoryEntity[]> {
+    return this.repo.findCategoriesBySport(sportId);
+  }
 
   createCategory(sportId: string, name: string, order = 0): Promise<SportCategoryEntity> {
     return this.repo.createCategory({ sportId, name, order });
@@ -50,8 +55,20 @@ export class SportService {
     return this.repo.findGroups(sportId, sportCategoryId);
   }
 
-  createGroups(sportId: string, sportCategoryId: string | null, groups: { name: string; capacity: number }[]): Promise<SportCategoryGroupEntity[]> {
-    return this.repo.createGroups(groups.map((g, i) => ({ sportId, sportCategoryId, name: g.name, capacity: g.capacity, sortOrder: i })));
+  createGroups(
+    sportId: string,
+    sportCategoryId: string | null,
+    groups: { name: string; capacity: number }[],
+  ): Promise<SportCategoryGroupEntity[]> {
+    return this.repo.createGroups(
+      groups.map((g, i) => ({
+        sportId,
+        sportCategoryId,
+        name: g.name,
+        capacity: g.capacity,
+        sortOrder: i,
+      })),
+    );
   }
 
   async updateGroup(id: string, data: Partial<SportCategoryGroupEntity>): Promise<SportCategoryGroupEntity> {
@@ -70,9 +87,15 @@ export class SportService {
     return this.repo.findAssignedTeams(sportId, sportCategoryId);
   }
 
-  assignTeam(sportId: string, sportCategoryId: string | null, raffleTeamId: string): Promise<SportCategoryTeamEntity> {
+  assignTeam(
+    sportId: string,
+    sportCategoryId: string | null,
+    raffleTeamId: string,
+  ): Promise<SportCategoryTeamEntity> {
     return this.repo.assignTeam({ sportId, sportCategoryId, raffleTeamId });
   }
 
-  async removeTeamAssignment(id: string): Promise<void> { return this.repo.removeTeamAssignment(id); }
+  async removeTeamAssignment(id: string): Promise<void> {
+    return this.repo.removeTeamAssignment(id);
+  }
 }

@@ -17,11 +17,19 @@ export interface ISportService {
   deleteCategory(id: string): Promise<void>;
 
   findGroups(sportId: string, sportCategoryId?: string | null): Promise<SportCategoryGroupEntity[]>;
-  createGroups(sportId: string, sportCategoryId: string | null, groups: { name: string; capacity: number }[]): Promise<SportCategoryGroupEntity[]>;
+  createGroups(
+    sportId: string,
+    sportCategoryId: string | null,
+    groups: { name: string; capacity: number }[],
+  ): Promise<SportCategoryGroupEntity[]>;
   updateGroup(id: string, data: Partial<SportCategoryGroupEntity>): Promise<SportCategoryGroupEntity>;
   deleteGroup(id: string): Promise<void>;
 
   findAssignedTeams(sportId: string, sportCategoryId?: string | null): Promise<SportCategoryTeamEntity[]>;
-  assignTeam(sportId: string, sportCategoryId: string | null, raffleTeamId: string): Promise<SportCategoryTeamEntity>;
+  assignTeam(
+    sportId: string,
+    sportCategoryId: string | null,
+    raffleTeamId: string,
+  ): Promise<SportCategoryTeamEntity>;
   removeTeamAssignment(id: string): Promise<void>;
 }

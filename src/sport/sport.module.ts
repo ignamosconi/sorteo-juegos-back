@@ -8,18 +8,24 @@ import { SportRepository } from './repositories/sport.repository.js';
 import { SportService } from './services/sport.service.js';
 import { SportController } from './controllers/sport.controller.js';
 import { SPORT_REPOSITORY } from './repositories/interfaces/sport.repository.interface.js';
+import { SPORT_SERVICE } from './services/interfaces/sport.service.interface.js';
 import { AuthGuardModule } from '../common/auth-guard.module.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SportEntity, SportCategoryEntity, SportCategoryGroupEntity, SportCategoryTeamEntity]),
+    TypeOrmModule.forFeature([
+      SportEntity,
+      SportCategoryEntity,
+      SportCategoryGroupEntity,
+      SportCategoryTeamEntity,
+    ]),
     AuthGuardModule,
   ],
   controllers: [SportController],
   providers: [
     { provide: SPORT_REPOSITORY, useClass: SportRepository },
-    SportService,
+    { provide: SPORT_SERVICE, useClass: SportService },
   ],
-  exports: [SportService],
+  exports: [SPORT_SERVICE],
 })
 export class SportModule {}
