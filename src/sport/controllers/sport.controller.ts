@@ -6,10 +6,11 @@ import {
   CreateSportCategoryDto, CreateSportDto, UpdateGroupDto,
   UpdateSportCategoryDto, UpdateSportDto,
 } from '../dtos/sport.dto.js';
+import { ISportController } from './interfaces/sport.controller.interface.js';
 
 @Controller()
 @UseGuards(AdminJwtGuard)
-export class SportController {
+export class SportController implements ISportController {
   constructor(private readonly service: SportService) {}
 
   // Sports

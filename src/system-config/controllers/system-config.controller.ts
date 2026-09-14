@@ -2,9 +2,10 @@ import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
 import { AdminJwtGuard } from '../../admin-auth/guards/admin-jwt.guard.js';
 import { SystemConfigService } from '../services/system-config.service.js';
 import { UpdateSystemConfigDto } from '../dtos/update-system-config.dto.js';
+import { ISystemConfigController } from './interfaces/system-config.controller.interface.js';
 
 @Controller('system-config')
-export class SystemConfigController {
+export class SystemConfigController implements ISystemConfigController {
   constructor(private readonly service: SystemConfigService) {}
 
   @Get()

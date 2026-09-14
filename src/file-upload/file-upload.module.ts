@@ -3,7 +3,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import { FileUploadController } from './file-upload.controller.js';
+import { FileUploadController } from './controllers/file-upload.controller.js';
 import { AuthGuardModule } from '../common/auth-guard.module.js';
 
 const uploadPath = join(process.cwd(), 'public', 'uploads');
