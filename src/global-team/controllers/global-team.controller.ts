@@ -10,7 +10,7 @@ import { IGlobalTeamController } from './interfaces/global-team.controller.inter
 export class GlobalTeamController implements IGlobalTeamController {
   constructor(private readonly service: GlobalTeamService) {}
 
-
+  @Get() findAll() { return this.service.findAll(); }
   @Post() create(@Body() dto: CreateGlobalTeamDto) { return this.service.create(dto); }
   @Patch(':id') update(@Param('id') id: string, @Body() dto: UpdateGlobalTeamDto) { return this.service.update(id, dto); }
   @Delete(':id') remove(@Param('id') id: string) { return this.service.delete(id); }
