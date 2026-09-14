@@ -40,8 +40,8 @@ export class RaffleService implements IRaffleService {
 
   async start(id: string): Promise<RaffleEntity> {
     const raffle = await this.findById(id);
-    if (raffle.status !== RaffleStatus.PENDING) {
-      throw new BadRequestException('El sorteo ya fue iniciado');
+    if (raffle.status !== RaffleStatus.PENDING && raffle.status !== RaffleStatus.CONFIGURED) {
+      throw new BadRequestException('El sorteo ya fue iniciado o finalizado');
     }
     const publicSlug = randomBytes(6).toString('hex');
     const drawSlug = randomBytes(8).toString('hex');

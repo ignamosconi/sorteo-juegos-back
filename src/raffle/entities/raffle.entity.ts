@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateCol
 
 export enum RaffleStatus {
   PENDING = 'pending',
+  CONFIGURED = 'configured',
   IN_PROGRESS = 'in_progress',
   FINISHED = 'finished',
 }
