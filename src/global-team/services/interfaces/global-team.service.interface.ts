@@ -6,6 +6,7 @@ export const GLOBAL_TEAM_SERVICE = 'GLOBAL_TEAM_SERVICE';
 
 export interface IGlobalTeamService {
   findAll(): Promise<GlobalTeamEntity[]>;
+  findById(id: string): Promise<GlobalTeamEntity>;
   create(dto: CreateGlobalTeamDto): Promise<GlobalTeamEntity>;
   update(id: string, dto: UpdateGlobalTeamDto): Promise<GlobalTeamEntity>;
   delete(id: string): Promise<void>;
