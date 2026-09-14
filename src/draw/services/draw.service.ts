@@ -1,20 +1,29 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { DrawPhase } from '../entities/draw-state.entity.js';
+import { DrawPhase, DrawStateEntity } from '../entities/draw-state.entity.js';
 import type { IDrawRepository } from '../repositories/interfaces/draw.repository.interface.js';
 import { DRAW_REPOSITORY } from '../repositories/interfaces/draw.repository.interface.js';
 import { SportService } from '../../sport/services/sport.service.js';
-import { RaffleService } from '../../raffle/services/raffle.service.js';
-import { RaffleStatus } from '../../raffle/entities/raffle.entity.js';
+import type { IRaffleService } from '../../raffle/services/interfaces/raffle.service.interface.js';
+import { RAFFLE_SERVICE } from '../../raffle/services/interfaces/raffle.service.interface.js';
+import { RaffleEntity, RaffleStatus } from '../../raffle/entities/raffle.entity.js';
+import type { IDrawService } from './interfaces/draw.service.interface.js';
+import { SelectContextDto } from '../dtos/select-context.dto.js';
+import {
+  DrawFullStateResponseDto,
+  DrawTeamResponseDto,
+  DrawGroupResponseDto,
+  PublicResultsResponseDto,
+} from '../dtos/draw-response.dto.js';
 
 @Injectable()
-export class DrawService {
+export class DrawService implements IDrawService {
   constructor(
     @Inject(DRAW_REPOSITORY) private readonly repo: IDrawRepository,
     private readonly sportService: SportService,
-    private readonly raffleService: RaffleService,
+    @Inject(RAFFLE_SERVICE) private readonly raffleService: IRaffleService,
   ) {}
 
-  async getState(raffleId: string) {
+  async getState(raffleId: string): Promise<DrawStateEntity | null> {
     const raffle = await this.raffleService.findById(raffleId);
     let state = await this.repo.getState(raffleId);
     if (!state && raffle.status === RaffleStatus.IN_PROGRESS) {
@@ -23,9 +32,9 @@ export class DrawService {
     return state;
   }
 
-  async getFullState(raffleId: string) {
+  async getFullState(raffleId: string): Promise<DrawFullStateResponseDto> {
     const state = await this.getState(raffleId);
-    if (!state) return { phase: 'idle', remainingTeams: [], remainingGroups: [], results: [] };
+    if (!state) return { phase: 'idle', remainingTeams: [], remainingGroups: [], results: [] } as unknown as DrawFullStateResponseDto;
 
     const results = await this.repo.getResults(raffleId);
 
@@ -54,20 +63,20 @@ export class DrawService {
     return { state, remainingTeams, remainingGroups, results };
   }
 
-  async selectContext(raffleId: string, sportId: string, sportCategoryId?: string) {
+  async selectContext(raffleId: string, dto: SelectContextDto): Promise<DrawFullStateResponseDto> {
     const state = await this.getState(raffleId);
     if (!state) throw new BadRequestException('Sorteo no iniciado');
 
     await this.repo.updateState(raffleId, {
-      currentSportId: sportId,
-      currentSportCategoryId: sportCategoryId ?? null,
+      currentSportId: dto.sportId,
+      currentSportCategoryId: dto.sportCategoryId ?? null,
       drawnTeamId: null,
       phase: DrawPhase.PICKING_TEAM,
     });
     return this.getFullState(raffleId);
   }
 
-  async drawTeam(raffleId: string) {
+  async drawTeam(raffleId: string): Promise<DrawTeamResponseDto> {
     const full = await this.getFullState(raffleId);
     if (full.state?.phase !== DrawPhase.PICKING_TEAM) {
       throw new BadRequestException('No es el turno de sortear un equipo');
@@ -80,7 +89,7 @@ export class DrawService {
     return { team, state: full.state };
   }
 
-  async drawGroup(raffleId: string) {
+  async drawGroup(raffleId: string): Promise<DrawGroupResponseDto> {
     const full = await this.getFullState(raffleId);
     if (full.state?.phase !== DrawPhase.PICKING_GROUP) {
       throw new BadRequestException('No es el turno de sortear un grupo');
@@ -92,7 +101,6 @@ export class DrawService {
 
     const group = groups[Math.floor(Math.random() * groups.length)];
 
-    // Calculate position (1-based, how many teams already in this group + 1)
     const groupResults = await this.repo.getResultsByGroup(group.id);
     const position = groupResults.length + 1;
 
@@ -109,7 +117,6 @@ export class DrawService {
       lastDrawResultId: result.id,
     });
 
-    // Check if this sport+category is done
     const newFull = await this.getFullState(raffleId);
     const isDone = (newFull.remainingTeams as unknown[]).length === 0;
     if (isDone) {
@@ -119,12 +126,11 @@ export class DrawService {
     return { result, isDone };
   }
 
-  async undoLast(raffleId: string) {
+  async undoLast(raffleId: string): Promise<DrawFullStateResponseDto> {
     const lastResult = await this.repo.getLastResult(raffleId);
     if (!lastResult) throw new BadRequestException('No hay sorteo para deshacer');
 
     await this.repo.deleteResult(lastResult.id);
-    // Reset state back to picking_team if we had context
     const state = await this.getState(raffleId);
     if (state?.currentSportId || lastResult.sportCategoryGroup.sportId) {
       await this.repo.updateState(raffleId, {
@@ -138,8 +144,9 @@ export class DrawService {
     return this.getFullState(raffleId);
   }
 
-  async getPublicResults(publicSlug: string) {
-    const raffle = await this.raffleService['repo'].findByPublicSlug(publicSlug);
+  async getPublicResults(publicSlug: string): Promise<PublicResultsResponseDto> {
+    const raffleRepo = (this.raffleService as unknown as { repo: { findByPublicSlug(slug: string): Promise<RaffleEntity | null> } }).repo;
+    const raffle = await raffleRepo.findByPublicSlug(publicSlug);
     if (!raffle) throw new NotFoundException('Sorteo no encontrado');
     const sports = await this.sportService.findByRaffle(raffle.id);
     const results = await this.repo.getResults(raffle.id);
@@ -165,8 +172,9 @@ export class DrawService {
     return { raffle, sports: sportsWithData };
   }
 
-  async getRaffleByDrawSlug(drawSlug: string) {
-    const raffle = await this.raffleService['repo'].findByDrawSlug(drawSlug);
+  async getRaffleByDrawSlug(drawSlug: string): Promise<RaffleEntity> {
+    const raffleRepo = (this.raffleService as unknown as { repo: { findByDrawSlug(slug: string): Promise<RaffleEntity | null> } }).repo;
+    const raffle = await raffleRepo.findByDrawSlug(drawSlug);
     if (!raffle) throw new NotFoundException('Sorteo no encontrado');
     return raffle;
   }

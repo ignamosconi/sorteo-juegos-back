@@ -6,6 +6,7 @@ import { DrawRepository } from './repositories/draw.repository.js';
 import { DrawService } from './services/draw.service.js';
 import { DrawController } from './controllers/draw.controller.js';
 import { DRAW_REPOSITORY } from './repositories/interfaces/draw.repository.interface.js';
+import { DRAW_SERVICE } from './services/interfaces/draw.service.interface.js';
 import { AuthGuardModule } from '../common/auth-guard.module.js';
 import { SportModule } from '../sport/sport.module.js';
 import { RaffleModule } from '../raffle/raffle.module.js';
@@ -13,13 +14,15 @@ import { RaffleModule } from '../raffle/raffle.module.js';
 @Module({
   imports: [
     TypeOrmModule.forFeature([DrawResultEntity, DrawStateEntity]),
-    AuthGuardModule, SportModule, RaffleModule,
+    AuthGuardModule,
+    SportModule,
+    RaffleModule,
   ],
   controllers: [DrawController],
   providers: [
     { provide: DRAW_REPOSITORY, useClass: DrawRepository },
-    DrawService,
+    { provide: DRAW_SERVICE, useClass: DrawService },
   ],
-  exports: [DrawService],
+  exports: [DRAW_SERVICE],
 })
 export class DrawModule {}
