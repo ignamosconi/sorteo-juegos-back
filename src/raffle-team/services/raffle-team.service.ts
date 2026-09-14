@@ -4,31 +4,38 @@ import { CreateRaffleTeamDto, ImportGlobalTeamsDto } from '../dtos/create-raffle
 import { UpdateRaffleTeamDto } from '../dtos/update-raffle-team.dto.js';
 import type { IRaffleTeamRepository } from '../repositories/interfaces/raffle-team.repository.interface.js';
 import { RAFFLE_TEAM_REPOSITORY } from '../repositories/interfaces/raffle-team.repository.interface.js';
-import { GlobalTeamService } from '../../global-team/services/global-team.service.js';
+import type { IRaffleTeamService } from './interfaces/raffle-team.service.interface.js';
+import type { IGlobalTeamService } from '../../global-team/services/interfaces/global-team.service.interface.js';
+import { GLOBAL_TEAM_SERVICE } from '../../global-team/services/interfaces/global-team.service.interface.js';
 
 @Injectable()
-export class RaffleTeamService {
+export class RaffleTeamService implements IRaffleTeamService {
   constructor(
     @Inject(RAFFLE_TEAM_REPOSITORY) private readonly repo: IRaffleTeamRepository,
-    private readonly globalTeamService: GlobalTeamService,
+    @Inject(GLOBAL_TEAM_SERVICE) private readonly globalTeamService: IGlobalTeamService,
   ) {}
 
-  findByRaffle(raffleId: string): Promise<RaffleTeamEntity[]> { return this.repo.findByRaffle(raffleId); }
+  findByRaffle(raffleId: string): Promise<RaffleTeamEntity[]> {
+    return this.repo.findByRaffle(raffleId);
+  }
 
   create(raffleId: string, dto: CreateRaffleTeamDto): Promise<RaffleTeamEntity> {
     return this.repo.create({ ...dto, raffleId });
   }
 
   async importFromGlobal(raffleId: string, dto: ImportGlobalTeamsDto): Promise<RaffleTeamEntity[]> {
-    const teams = await Promise.all(dto.globalTeamIds.map(id => this.globalTeamService.findById ? this.globalTeamService['repo'].findById(id) : null));
-    const all = await this.globalTeamService.findAll();
-    const selected = all.filter(t => dto.globalTeamIds.includes(t.id));
-    return this.repo.createMany(selected.map(t => ({
-      raffleId,
-      name: t.name,
-      abbreviation: t.abbreviation,
-      imagePath: t.imagePath,
-    })));
+    const selected = await Promise.all(
+      dto.globalTeamIds.map((id) => this.globalTeamService.findById(id)),
+    );
+
+    return this.repo.createMany(
+      selected.map((t) => ({
+        raffleId,
+        name: t.name,
+        abbreviation: t.abbreviation,
+        imagePath: t.imagePath,
+      })),
+    );
   }
 
   async update(id: string, dto: UpdateRaffleTeamDto): Promise<RaffleTeamEntity> {
