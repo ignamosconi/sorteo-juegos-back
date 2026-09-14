@@ -1,4 +1,5 @@
-import { IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsArray, IsInt, IsOptional, IsString, IsUUID, Min, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateSportDto {
   @IsString() name!: string;
@@ -29,6 +30,9 @@ export class CreateGroupDto {
 }
 
 export class BulkCreateGroupsDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateGroupDto)
   groups!: CreateGroupDto[];
 }
 
