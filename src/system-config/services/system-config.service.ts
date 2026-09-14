@@ -3,9 +3,10 @@ import { SystemConfigEntity } from '../entities/system-config.entity.js';
 import { UpdateSystemConfigDto } from '../dtos/update-system-config.dto.js';
 import { SYSTEM_CONFIG_REPOSITORY } from '../repositories/interfaces/system-config.repository.interface.js';
 import type { ISystemConfigRepository } from '../repositories/interfaces/system-config.repository.interface.js';
+import type { ISystemConfigService } from './interfaces/system-config.service.interface.js';
 
 @Injectable()
-export class SystemConfigService {
+export class SystemConfigService implements ISystemConfigService {
   constructor(
     @Inject(SYSTEM_CONFIG_REPOSITORY)
     private readonly repo: ISystemConfigRepository,
