@@ -29,12 +29,12 @@ export class SportController implements ISportController {
   }
 
   @Post('raffles/:raffleId/sports')
-  createSport(
-    @Param('raffleId') raffleId: string,
-    @Body() dto: CreateSportDto,
-  ): Promise<SportEntity> {
-    return this.service.createSport(raffleId, dto.name, dto.abbreviation, dto.order);
-  }
+    createSport(
+      @Param('raffleId') raffleId: string,
+      @Body() dto: CreateSportDto,
+    ): Promise<SportEntity> {
+      return this.service.createSport(raffleId, dto.name, dto.order);
+    }
 
   @Patch('sports/:id')
   updateSport(@Param('id') id: string, @Body() dto: UpdateSportDto): Promise<SportEntity> {

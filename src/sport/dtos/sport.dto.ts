@@ -3,13 +3,11 @@ import { Type } from 'class-transformer';
 
 export class CreateSportDto {
   @IsString() name!: string;
-  @IsString() abbreviation!: string;
   @IsOptional() @IsInt() @Min(0) order?: number;
 }
 
 export class UpdateSportDto {
   @IsOptional() @IsString() name?: string;
-  @IsOptional() @IsString() abbreviation?: string;
   @IsOptional() @IsInt() @Min(0) order?: number;
 }
 

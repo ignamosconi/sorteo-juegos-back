@@ -8,7 +8,6 @@ export class SportEntity {
   @ManyToOne(() => RaffleEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'raffleId' }) raffle!: RaffleEntity;
   @Column() name!: string;
-  @Column() abbreviation!: string;
   @Column({ default: 0 }) order!: number;
   @CreateDateColumn() createdAt!: Date;
   @UpdateDateColumn() updatedAt!: Date;

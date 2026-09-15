@@ -30,6 +30,8 @@ import { DrawModule } from './draw/draw.module.js';
 import { DrawResultEntity } from './draw/entities/draw-result.entity.js';
 import { DrawStateEntity } from './draw/entities/draw-state.entity.js';
 import { FileUploadModule } from './file-upload/file-upload.module.js';
+import { DefaultSportModule } from './default-sport/default-sport.module.js';
+import { DefaultSportEntity } from './default-sport/entities/default-sport.entity.js';
 
 @Module({
   imports: [
@@ -54,7 +56,7 @@ import { FileUploadModule } from './file-upload/file-upload.module.js';
           SystemConfigEntity, DefaultCategoryEntity, GlobalTeamEntity,
           RaffleEntity, RaffleTeamEntity,
           SportEntity, SportCategoryEntity, SportCategoryGroupEntity, SportCategoryTeamEntity,
-          DrawResultEntity, DrawStateEntity,
+          DrawResultEntity, DrawStateEntity, DefaultSportEntity,
         ],
         synchronize: false,
         migrations: [join(__dirname, 'database', 'migrations', '*.js')],
@@ -72,6 +74,7 @@ import { FileUploadModule } from './file-upload/file-upload.module.js';
     RaffleModule,
     RaffleTeamModule,
     SportModule,
+    DefaultSportModule,
     DrawModule,
   ],
   providers: [

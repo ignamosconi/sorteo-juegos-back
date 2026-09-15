@@ -3,11 +3,11 @@ import { SportCategoryEntity } from '../../entities/sport-category.entity.js';
 import { SportCategoryGroupEntity } from '../../entities/sport-category-group.entity.js';
 import { SportCategoryTeamEntity } from '../../entities/sport-category-team.entity.js';
 
-export const SPORT_SERVICE = 'SPORT_SERVICE';
+export const SPORT_SERVICE = Symbol('SPORT_SERVICE');
 
 export interface ISportService {
   findByRaffle(raffleId: string): Promise<SportEntity[]>;
-  createSport(raffleId: string, name: string, abbreviation: string, order?: number): Promise<SportEntity>;
+  createSport(raffleId: string, name: string, order?: number): Promise<SportEntity>;
   updateSport(id: string, data: Partial<SportEntity>): Promise<SportEntity>;
   deleteSport(id: string): Promise<void>;
 
@@ -26,10 +26,6 @@ export interface ISportService {
   deleteGroup(id: string): Promise<void>;
 
   findAssignedTeams(sportId: string, sportCategoryId?: string | null): Promise<SportCategoryTeamEntity[]>;
-  assignTeam(
-    sportId: string,
-    sportCategoryId: string | null,
-    raffleTeamId: string,
-  ): Promise<SportCategoryTeamEntity>;
+  assignTeam(sportId: string, sportCategoryId: string | null, raffleTeamId: string): Promise<SportCategoryTeamEntity>;
   removeTeamAssignment(id: string): Promise<void>;
 }

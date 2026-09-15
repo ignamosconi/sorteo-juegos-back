@@ -15,8 +15,8 @@ export class SportService implements ISportService {
     return this.repo.findByRaffle(raffleId);
   }
 
-  createSport(raffleId: string, name: string, abbreviation: string, order = 0): Promise<SportEntity> {
-    return this.repo.createSport({ raffleId, name, abbreviation, order });
+  createSport(raffleId: string, name: string, order = 0): Promise<SportEntity> {
+    return this.repo.createSport({ raffleId, name, order });
   }
 
   async updateSport(id: string, data: Partial<SportEntity>): Promise<SportEntity> {
