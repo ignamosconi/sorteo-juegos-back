@@ -5,10 +5,15 @@ import { UpdateGlobalTeamDto } from '../dtos/update-global-team.dto.js';
 import type { IGlobalTeamRepository } from '../repositories/interfaces/global-team.repository.interface.js';
 import { GLOBAL_TEAM_REPOSITORY } from '../repositories/interfaces/global-team.repository.interface.js';
 import type { IGlobalTeamService } from './interfaces/global-team.service.interface.js';
+import { FILE_UPLOAD_SERVICE } from '../../file-upload/services/interfaces/file-upload.service.interface.js';
+import type { IFileUploadService } from '../../file-upload/services/interfaces/file-upload.service.interface.js';
 
 @Injectable()
 export class GlobalTeamService implements IGlobalTeamService {
-  constructor(@Inject(GLOBAL_TEAM_REPOSITORY) private readonly repo: IGlobalTeamRepository) {}
+  constructor(
+    @Inject(GLOBAL_TEAM_REPOSITORY) private readonly repo: IGlobalTeamRepository,
+    @Inject(FILE_UPLOAD_SERVICE) private readonly fileUploadService: IFileUploadService,
+  ) {}
 
   findAll(): Promise<GlobalTeamEntity[]> {
     return this.repo.findAll();
@@ -25,14 +30,24 @@ export class GlobalTeamService implements IGlobalTeamService {
   }
 
   async update(id: string, dto: UpdateGlobalTeamDto): Promise<GlobalTeamEntity> {
+    const current = await this.findById(id);
     const updated = await this.repo.update(id, dto);
+
     if (!updated) throw new NotFoundException('Equipo no encontrado');
+
+    if (dto.imagePath !== undefined && current.imagePath && current.imagePath !== dto.imagePath) {
+      await this.fileUploadService.deleteUnusedFile(current.imagePath);
+    }
+
     return updated;
   }
 
   async delete(id: string): Promise<void> {
-    const found = await this.repo.findById(id);
-    if (!found) throw new NotFoundException('Equipo no encontrado');
-    return this.repo.delete(id);
+    const found = await this.findById(id);
+    await this.repo.delete(id);
+
+    if (found.imagePath) {
+      await this.fileUploadService.deleteUnusedFile(found.imagePath);
+    }
   }
 }

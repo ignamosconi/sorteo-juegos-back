@@ -4,5 +4,6 @@ import { DeleteImageResponseDto } from '../../dtos/delete-image-response.dto.js'
 
 export interface IFileUploadController {
   uploadImage(file: Express.Multer.File): UploadImageResponseDto | Promise<UploadImageResponseDto>;
-  deleteImage(dto: DeleteImageDto): DeleteImageResponseDto | Promise<DeleteImageResponseDto>;
+  deleteImage(dto: DeleteImageDto): Promise<DeleteImageResponseDto>;
+  cleanOrphans(): Promise<{ deletedCount: number }>;
 }

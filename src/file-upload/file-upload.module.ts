@@ -6,6 +6,8 @@ import { existsSync, mkdirSync } from 'fs';
 import { randomUUID } from 'crypto';
 import { FileUploadController } from './controllers/file-upload.controller.js';
 import { AuthGuardModule } from '../common/auth-guard.module.js';
+import { FileUploadService } from './services/file-upload.service.js';
+import { FILE_UPLOAD_SERVICE } from './services/interfaces/file-upload.service.interface.js';
 
 const uploadPath = join(process.cwd(), 'public', 'uploads');
 
@@ -19,7 +21,6 @@ const uploadPath = join(process.cwd(), 'public', 'uploads');
           cb(null, uploadPath);
         },
         filename: (_req, file, cb) => {
-          // Genera un UUID impredecible: e.g. 9b1deb4d-3b7d-4bad-9bd2-2ca771600165.png
           const fileExtension = extname(file.originalname).toLowerCase();
           cb(null, `${randomUUID()}${fileExtension}`);
         },
@@ -30,10 +31,16 @@ const uploadPath = join(process.cwd(), 'public', 'uploads');
         }
         cb(null, true);
       },
-      limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+      limits: { fileSize: 5 * 1024 * 1024 },
     }),
   ],
   controllers: [FileUploadController],
-  exports: [MulterModule],
+  providers: [
+    {
+      provide: FILE_UPLOAD_SERVICE,
+      useClass: FileUploadService,
+    },
+  ],
+  exports: [MulterModule, FILE_UPLOAD_SERVICE],
 })
 export class FileUploadModule {}

@@ -7,9 +7,14 @@ import { SystemConfigController } from './controllers/system-config.controller.j
 import { SYSTEM_CONFIG_REPOSITORY } from './repositories/interfaces/system-config.repository.interface.js';
 import { SYSTEM_CONFIG_SERVICE } from './services/interfaces/system-config.service.interface.js';
 import { AuthGuardModule } from '../common/auth-guard.module.js';
+import { FileUploadModule } from '../file-upload/file-upload.module.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SystemConfigEntity]), AuthGuardModule],
+  imports: [
+    TypeOrmModule.forFeature([SystemConfigEntity]),
+    AuthGuardModule,
+    FileUploadModule,
+  ],
   controllers: [SystemConfigController],
   providers: [
     { provide: SYSTEM_CONFIG_REPOSITORY, useClass: SystemConfigRepository },

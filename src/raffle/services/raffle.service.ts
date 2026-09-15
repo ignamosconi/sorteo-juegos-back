@@ -7,10 +7,18 @@ import { GetRafflesFilterDto } from '../dtos/get-raffles-filter.dto.js';
 import type { IRaffleRepository } from '../repositories/interfaces/raffle.repository.interface.js';
 import { RAFFLE_REPOSITORY } from '../repositories/interfaces/raffle.repository.interface.js';
 import type { IRaffleService } from './interfaces/raffle.service.interface.js';
+import { RAFFLE_TEAM_SERVICE } from '../../raffle-team/services/interfaces/raffle-team.service.interface.js';
+import type { IRaffleTeamService } from '../../raffle-team/services/interfaces/raffle-team.service.interface.js';
+import { FILE_UPLOAD_SERVICE } from '../../file-upload/services/interfaces/file-upload.service.interface.js';
+import type { IFileUploadService } from '../../file-upload/services/interfaces/file-upload.service.interface.js';
 
 @Injectable()
 export class RaffleService implements IRaffleService {
-  constructor(@Inject(RAFFLE_REPOSITORY) private readonly repo: IRaffleRepository) {}
+  constructor(
+    @Inject(RAFFLE_REPOSITORY) private readonly repo: IRaffleRepository,
+    @Inject(RAFFLE_TEAM_SERVICE) private readonly raffleTeamService: IRaffleTeamService,
+    @Inject(FILE_UPLOAD_SERVICE) private readonly fileUploadService: IFileUploadService,
+  ) {}
 
   findAll(filters?: GetRafflesFilterDto): Promise<RaffleEntity[]> {
     return this.repo.findAll(filters);
@@ -33,9 +41,18 @@ export class RaffleService implements IRaffleService {
   }
 
   async delete(id: string): Promise<void> {
-    const found = await this.repo.findById(id);
+    const found = await this.findById(id);
     if (!found) throw new NotFoundException('Sorteo no encontrado');
-    return this.repo.delete(id);
+
+    const raffleTeams = await this.raffleTeamService.findByRaffle(id);
+
+    await this.repo.delete(id);
+
+    for (const team of raffleTeams) {
+      if (team.imagePath) {
+        await this.fileUploadService.deleteUnusedFile(team.imagePath);
+      }
+    }
   }
 
   async start(id: string): Promise<RaffleEntity> {

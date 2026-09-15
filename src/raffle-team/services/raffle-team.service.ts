@@ -7,12 +7,15 @@ import { RAFFLE_TEAM_REPOSITORY } from '../repositories/interfaces/raffle-team.r
 import type { IRaffleTeamService } from './interfaces/raffle-team.service.interface.js';
 import type { IGlobalTeamService } from '../../global-team/services/interfaces/global-team.service.interface.js';
 import { GLOBAL_TEAM_SERVICE } from '../../global-team/services/interfaces/global-team.service.interface.js';
+import { FILE_UPLOAD_SERVICE } from '../../file-upload/services/interfaces/file-upload.service.interface.js';
+import type { IFileUploadService } from '../../file-upload/services/interfaces/file-upload.service.interface.js';
 
 @Injectable()
 export class RaffleTeamService implements IRaffleTeamService {
   constructor(
     @Inject(RAFFLE_TEAM_REPOSITORY) private readonly repo: IRaffleTeamRepository,
     @Inject(GLOBAL_TEAM_SERVICE) private readonly globalTeamService: IGlobalTeamService,
+    @Inject(FILE_UPLOAD_SERVICE) private readonly fileUploadService: IFileUploadService,
   ) {}
 
   findByRaffle(raffleId: string): Promise<RaffleTeamEntity[]> {
@@ -39,14 +42,26 @@ export class RaffleTeamService implements IRaffleTeamService {
   }
 
   async update(id: string, dto: UpdateRaffleTeamDto): Promise<RaffleTeamEntity> {
+    const current = await this.repo.findById(id);
+    if (!current) throw new NotFoundException('Equipo no encontrado');
+
     const updated = await this.repo.update(id, dto);
-    if (!updated) throw new NotFoundException('Equipo no encontrado');
-    return updated;
+
+    if (dto.imagePath !== undefined && current.imagePath && current.imagePath !== dto.imagePath) {
+      await this.fileUploadService.deleteUnusedFile(current.imagePath);
+    }
+
+    return updated!;
   }
 
   async delete(id: string): Promise<void> {
     const found = await this.repo.findById(id);
     if (!found) throw new NotFoundException('Equipo no encontrado');
-    return this.repo.delete(id);
+
+    await this.repo.delete(id);
+
+    if (found.imagePath) {
+      await this.fileUploadService.deleteUnusedFile(found.imagePath);
+    }
   }
 }
