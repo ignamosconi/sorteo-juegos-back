@@ -11,7 +11,7 @@ import { DEFAULT_SPORT_REPOSITORY } from './repositories/interfaces/default-spor
 @Module({
   imports: [
     TypeOrmModule.forFeature([DefaultSportEntity]),
-    AuthGuardModule, // <--- Agregar esta línea
+    AuthGuardModule, 
   ],
   controllers: [DefaultSportController],
   providers: [
