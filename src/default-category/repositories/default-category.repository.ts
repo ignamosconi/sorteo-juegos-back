@@ -25,7 +25,7 @@ export class DefaultCategoryRepository implements IDefaultCategoryRepository {
     return this.findById(id);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string): Promise<void> { 
     await this.repo.delete(id);
   }
 }
