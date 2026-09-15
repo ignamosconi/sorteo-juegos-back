@@ -13,20 +13,27 @@ export class DrawRepository implements IDrawRepository {
   ) {}
 
   getState(raffleId: string): Promise<DrawStateEntity | null> {
-    return this.stateRepo.findOne({ where: { raffleId } });
+    return this.stateRepo.findOne({
+      where: { raffleId },
+      relations: {
+        currentSport: true,
+        currentSportCategory: true,
+        drawnTeam: true,
+      },
+    });
   }
 
   async createState(raffleId: string): Promise<DrawStateEntity> {
-    return this.stateRepo.save(this.stateRepo.create({ raffleId, phase: DrawPhase.IDLE }));
+    const state = this.stateRepo.create({ raffleId, phase: DrawPhase.IDLE });
+    return this.stateRepo.save(state);
   }
 
   async updateState(raffleId: string, data: Partial<DrawStateEntity>): Promise<DrawStateEntity> {
-    const existing = await this.getState(raffleId);
-    if (existing) {
-      await this.stateRepo.save(this.stateRepo.merge(existing, data));
-    } else {
-      await this.stateRepo.save(this.stateRepo.create({ ...data, raffleId }));
+    let existing = await this.stateRepo.findOne({ where: { raffleId } });
+    if (!existing) {
+      await this.createState(raffleId);
     }
+    await this.stateRepo.update(raffleId, data);
     const updated = await this.getState(raffleId);
     return updated!;
   }

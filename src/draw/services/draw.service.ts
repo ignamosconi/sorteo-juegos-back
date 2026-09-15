@@ -95,8 +95,11 @@ export class DrawService implements IDrawService {
     if (teams.length === 0) throw new BadRequestException('No hay equipos disponibles');
 
     const team = teams[Math.floor(Math.random() * teams.length)];
-    await this.repo.updateState(raffleId, { drawnTeamId: team.id, phase: DrawPhase.PICKING_GROUP });
-    return { team, state: full.state };
+    const updatedState = await this.repo.updateState(raffleId, {
+      drawnTeamId: team.id,
+      phase: DrawPhase.PICKING_GROUP,
+    });
+    return { team: team as any, state: updatedState };
   }
 
   async drawGroup(raffleId: string): Promise<DrawGroupResponseDto> {
@@ -130,10 +133,17 @@ export class DrawService implements IDrawService {
     const newFull = await this.getFullState(raffleId);
     const isDone = (newFull.remainingTeams as unknown[]).length === 0;
     if (isDone) {
-      await this.repo.updateState(raffleId, { phase: DrawPhase.IDLE, currentSportId: null, currentSportCategoryId: null });
+      await this.repo.updateState(raffleId, {
+        phase: DrawPhase.IDLE,
+        currentSportId: null,
+        currentSportCategoryId: null,
+        drawnTeamId: null,
+      });
     }
 
-    return { result, isDone };
+    const reloadedResult = await this.repo.getLastResult(raffleId);
+
+    return { result: reloadedResult ?? result, isDone };
   }
 
   async undoLast(raffleId: string): Promise<DrawFullStateResponseDto> {
