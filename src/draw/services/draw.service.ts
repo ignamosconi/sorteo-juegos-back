@@ -28,7 +28,16 @@ export class DrawService implements IDrawService {
     const raffle = await this.raffleService.findById(raffleId);
     let state = await this.repo.getState(raffleId);
     if (!state && raffle.status === RaffleStatus.IN_PROGRESS) {
-      state = await this.repo.createState(raffleId);
+      try {
+        state = await this.repo.createState(raffleId);
+      } catch (err: any) {
+        const pgCode = err?.code ?? err?.driverError?.code;
+        if (pgCode === '23505') {
+          state = await this.repo.getState(raffleId);
+        } else {
+          throw err;
+        }
+      }
     }
     return state;
   }
