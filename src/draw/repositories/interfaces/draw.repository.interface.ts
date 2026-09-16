@@ -11,5 +11,9 @@ export interface IDrawRepository {
   getResultsByGroup(sportCategoryGroupId: string): Promise<DrawResultEntity[]>;
   createResult(data: Partial<DrawResultEntity>): Promise<DrawResultEntity>;
   deleteResult(id: string): Promise<void>;
-  getLastResult(raffleId: string): Promise<DrawResultEntity | null>;
+  getLastResult(
+    raffleId: string,
+    sportId?: string,
+    sportCategoryId?: string | null,
+  ): Promise<DrawResultEntity | null>;
 }

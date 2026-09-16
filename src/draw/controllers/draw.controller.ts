@@ -4,6 +4,7 @@ import { IDrawController } from './interfaces/draw.controller.interface.js';
 import type { IDrawService } from '../services/interfaces/draw.service.interface.js';
 import { DRAW_SERVICE } from '../services/interfaces/draw.service.interface.js';
 import { SelectContextDto } from '../dtos/select-context.dto.js';
+import { UndoDrawDto } from '../dtos/undo-draw.dto.js';
 import {
   DrawFullStateResponseDto,
   DrawTeamResponseDto,
@@ -45,8 +46,11 @@ export class DrawController implements IDrawController {
 
   @Post('draw/:raffleId/undo')
   @UseGuards(AdminJwtGuard)
-  undoLast(@Param('raffleId') raffleId: string): Promise<DrawFullStateResponseDto> {
-    return this.service.undoLast(raffleId);
+  undoLast(
+    @Param('raffleId') raffleId: string,
+    @Body() dto?: UndoDrawDto,
+  ): Promise<DrawFullStateResponseDto> {
+    return this.service.undoLast(raffleId, dto);
   }
 
   @Get('public/:publicSlug')

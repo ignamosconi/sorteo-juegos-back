@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { DrawResultEntity } from '../entities/draw-result.entity.js';
 import { DrawStateEntity, DrawPhase } from '../entities/draw-state.entity.js';
 import { IDrawRepository } from './interfaces/draw.repository.interface.js';
@@ -66,9 +66,23 @@ export class DrawRepository implements IDrawRepository {
     await this.resultRepo.delete(id);
   }
 
-  getLastResult(raffleId: string): Promise<DrawResultEntity | null> {
+  getLastResult(
+    raffleId: string,
+    sportId?: string,
+    sportCategoryId?: string | null,
+  ): Promise<DrawResultEntity | null> {
+    const where: any = { raffleId };
+
+    if (sportId) {
+      const groupWhere: any = { sportId };
+      if (sportCategoryId !== undefined) {
+        groupWhere.sportCategoryId = sportCategoryId === null ? IsNull() : sportCategoryId;
+      }
+      where.sportCategoryGroup = groupWhere;
+    }
+
     return this.resultRepo.findOne({
-      where: { raffleId },
+      where,
       order: { drawnAt: 'DESC' },
       relations: {
         raffleTeam: true,

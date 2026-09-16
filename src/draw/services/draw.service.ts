@@ -9,6 +9,7 @@ import { RAFFLE_SERVICE } from '../../raffle/services/interfaces/raffle.service.
 import { RaffleEntity, RaffleStatus } from '../../raffle/entities/raffle.entity.js';
 import type { IDrawService } from './interfaces/draw.service.interface.js';
 import { SelectContextDto } from '../dtos/select-context.dto.js';
+import { UndoDrawDto } from '../dtos/undo-draw.dto.js';
 import {
   DrawFullStateResponseDto,
   DrawTeamResponseDto,
@@ -146,21 +147,33 @@ export class DrawService implements IDrawService {
     return { result: reloadedResult ?? result, isDone };
   }
 
-  async undoLast(raffleId: string): Promise<DrawFullStateResponseDto> {
-    const lastResult = await this.repo.getLastResult(raffleId);
+  async undoLast(raffleId: string, dto?: UndoDrawDto): Promise<DrawFullStateResponseDto> {
+    const targetSportId = dto?.sportId;
+    const targetCategoryId = dto?.sportCategoryId ?? dto?.categoryId ?? null;
+
+    const lastResult = await this.repo.getLastResult(
+      raffleId,
+      targetSportId,
+      targetSportId ? targetCategoryId : undefined,
+    );
+
     if (!lastResult) throw new BadRequestException('No hay sorteo para deshacer');
 
     await this.repo.deleteResult(lastResult.id);
-    const state = await this.getState(raffleId);
-    if (state?.currentSportId || lastResult.sportCategoryGroup.sportId) {
-      await this.repo.updateState(raffleId, {
-        currentSportId: lastResult.sportCategoryGroup.sportId,
-        currentSportCategoryId: lastResult.sportCategoryGroup.sportCategoryId,
-        drawnTeamId: null,
-        phase: DrawPhase.PICKING_TEAM,
-        lastDrawResultId: null,
-      });
-    }
+
+    const sportIdToSet = targetSportId ?? lastResult.sportCategoryGroup.sportId;
+    const categoryIdToSet = targetSportId
+      ? targetCategoryId
+      : lastResult.sportCategoryGroup.sportCategoryId;
+
+    await this.repo.updateState(raffleId, {
+      currentSportId: sportIdToSet,
+      currentSportCategoryId: categoryIdToSet,
+      drawnTeamId: null,
+      phase: DrawPhase.PICKING_TEAM,
+      lastDrawResultId: null,
+    });
+
     return this.getFullState(raffleId);
   }
 

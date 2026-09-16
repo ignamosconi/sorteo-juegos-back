@@ -1,4 +1,5 @@
 import { SelectContextDto } from '../../dtos/select-context.dto.js';
+import { UndoDrawDto } from '../../dtos/undo-draw.dto.js';
 import {
   DrawFullStateResponseDto,
   DrawTeamResponseDto,
@@ -12,7 +13,7 @@ export interface IDrawController {
   selectContext(raffleId: string, dto: SelectContextDto): Promise<DrawFullStateResponseDto>;
   drawTeam(raffleId: string): Promise<DrawTeamResponseDto>;
   drawGroup(raffleId: string): Promise<DrawGroupResponseDto>;
-  undoLast(raffleId: string): Promise<DrawFullStateResponseDto>;
+  undoLast(raffleId: string, dto?: UndoDrawDto): Promise<DrawFullStateResponseDto>;
   getPublicResults(publicSlug: string): Promise<PublicResultsResponseDto>;
   getRaffleByDrawSlug(drawSlug: string): Promise<RaffleEntity>;
 }
