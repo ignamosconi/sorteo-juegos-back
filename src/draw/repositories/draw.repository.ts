@@ -1,0 +1,93 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { IsNull, Repository } from 'typeorm';
+import { DrawResultEntity } from '../entities/draw-result.entity.js';
+import { DrawStateEntity, DrawPhase } from '../entities/draw-state.entity.js';
+import { IDrawRepository } from './interfaces/draw.repository.interface.js';
+
+@Injectable()
+export class DrawRepository implements IDrawRepository {
+  constructor(
+    @InjectRepository(DrawResultEntity) private readonly resultRepo: Repository<DrawResultEntity>,
+    @InjectRepository(DrawStateEntity) private readonly stateRepo: Repository<DrawStateEntity>,
+  ) {}
+
+  getState(raffleId: string): Promise<DrawStateEntity | null> {
+    return this.stateRepo.findOne({
+      where: { raffleId },
+      relations: {
+        currentSport: true,
+        currentSportCategory: true,
+        drawnTeam: true,
+      },
+    });
+  }
+
+  async createState(raffleId: string): Promise<DrawStateEntity> {
+    const state = this.stateRepo.create({ raffleId, phase: DrawPhase.IDLE });
+    return this.stateRepo.save(state);
+  }
+
+  async updateState(raffleId: string, data: Partial<DrawStateEntity>): Promise<DrawStateEntity> {
+    let existing = await this.stateRepo.findOne({ where: { raffleId } });
+    if (!existing) {
+      await this.createState(raffleId);
+    }
+    await this.stateRepo.update(raffleId, data);
+    const updated = await this.getState(raffleId);
+    return updated!;
+  }
+
+  getResults(raffleId: string): Promise<DrawResultEntity[]> {
+    return this.resultRepo.find({
+      where: { raffleId },
+      order: { drawnAt: 'ASC' },
+      relations: {
+        raffleTeam: true,
+        sportCategoryGroup: true,
+      },
+    });
+  }
+
+  getResultsByGroup(sportCategoryGroupId: string): Promise<DrawResultEntity[]> {
+    return this.resultRepo.find({
+      where: { sportCategoryGroupId },
+      relations: {
+        raffleTeam: true,
+      },
+    });
+  }
+
+  createResult(data: Partial<DrawResultEntity>): Promise<DrawResultEntity> {
+    return this.resultRepo.save(this.resultRepo.create(data));
+  }
+
+  async deleteResult(id: string): Promise<void> {
+    await this.resultRepo.delete(id);
+  }
+
+  getLastResult(
+    raffleId: string,
+    sportId?: string,
+    sportCategoryId?: string | null,
+  ): Promise<DrawResultEntity | null> {
+    const where: any = { raffleId };
+
+    if (sportId) {
+      const groupWhere: any = { sportId };
+      if (sportCategoryId !== undefined) {
+        groupWhere.sportCategoryId = sportCategoryId === null ? IsNull() : sportCategoryId;
+      }
+      where.sportCategoryGroup = groupWhere;
+    }
+
+    return this.resultRepo.findOne({
+      where,
+      order: { drawnAt: 'DESC' },
+      relations: {
+        raffleTeam: true,
+        sportCategoryGroup: true,
+      },
+    });
+  }
+}

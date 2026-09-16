@@ -9,7 +9,8 @@ import basicAuth from 'express-basic-auth';
 import { AppModule } from './app.module.js';
 import { ConfigService } from '@nestjs/config';
 import { AdminSeeder } from './database/seeders/admin.seeder.js';
-
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 const KNOWN_WEAK_SECRETS = new Set([
   'cambia_este_secret_acceso',
@@ -18,9 +19,8 @@ const KNOWN_WEAK_SECRETS = new Set([
   'cambia_este_secret_admin_refresco',
   'cambia_esta_password_min_8_caracteres',
   'cambia_esta_password_swagger',
-  'admin',   // SWAGGER_USER por defecto
+  'admin',
   'cambia_esta_password_redis',
-  
 ]);
 
 function assertSecrets(configService: ConfigService): void {
@@ -49,34 +49,30 @@ function assertSecrets(configService: ConfigService): void {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Habilitar la carpeta public para servir las imágenes subidas
+  app.useStaticAssets(join(process.cwd(), 'public'));
 
   app.use(helmet({
-    //Evita que el popup de login y la página de credenciales sean embebidos en iframes de otros orígenes (clickjacking)
     frameguard: { action: 'deny' },
-    // Fuerza HTTPS en producción indicándole al browser que recuerde conectarse solo por HTTPS por 1 año
     hsts: {
       maxAge: 31536000,
       includeSubDomains: true,
     },
-    //Evita que el browser infiera el tipo de contenido
     noSniff: true,
-    //Desactiva el header X-Powered-By (no revelar que usamos Express)
     hidePoweredBy: true,
-    //CSP básica: solo recursos propios + Google Fonts (usados en login y credentials)
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        imgSrc: ["'self'", 'data:'],
+        imgSrc: ["'self'", 'data:', 'blob:'],
         scriptSrc: ["'self'"],
         connectSrc: ["'self'"],
         frameAncestors: ["'none'"],
       },
     },
-    //Se configuró la política COOP de Helmet como unsafe-none para permitir 
-    //que el popup de login se comunique mediante postMessage con las aplicaciones cliente de origen cruzado."
     crossOriginOpenerPolicy: { policy: 'unsafe-none' }
   }));
 
@@ -88,14 +84,12 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
 
   const configService = app.get(ConfigService);
-
-  // Falla al arrancar si hay secretos por defecto en producción
   assertSecrets(configService);
 
   const port = configService.get<number>('PORT') || 3000;
   const swaggerUser = configService.getOrThrow<string>('SWAGGER_USER');
   const swaggerPassword = configService.getOrThrow<string>('SWAGGER_PASSWORD');
-  const nombreApp = configService.getOrThrow<string>('APP_NAME')
+  const nombreApp = configService.getOrThrow<string>('APP_NAME');
 
   app.use(
     ['/docs', '/docs-json'],
@@ -109,10 +103,6 @@ async function bootstrap() {
     .setTitle(nombreApp)
     .setDescription('Panel de administración.')
     .setVersion('1.0')
-    .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      'alumno-jwt',
-    )
     .addBearerAuth(
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       'admin-jwt',

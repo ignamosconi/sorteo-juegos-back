@@ -1,113 +1,174 @@
-# Dashboard de Administrador con 2FA - Backend
+# Sistema de Sorteos - Backend
 
-API REST construida con **NestJS** que provee autenticación segura para administradores con soporte de doble factor (TOTP).
+API REST desarrollada con **NestJS** que proporciona la arquitectura de persistencia, lógica de sorteos en vivo y autenticación segura con doble factor (2FA/TOTP) para la gestión de sorteos deportivos.
 
-## Front-end
-El front-end de este proyecto puede encontrarse a través del siguiente enlace:
-- https://github.com/ignamosconi/admin-dashboard-2fa-front
+Si bien fue pensado para los Juegos Deportivos Tecnológicos, la aplicación fue planteada de forma genérica, lo que permite utilizarla en cualquier entorno.
 
+## Repositorios
+- **Back-end:** https://github.com/ignamosconi/sorteo-juegos-back
+- **Front-end:** https://github.com/ignamosconi/sorteo-juegos-front
 
-## Funcionalidades principales
+---
 
-- **Gestión de administradores** - CRUD completo: crear, listar, actualizar y eliminar admins.
-- **Autenticación con 2FA obligatorio** - Flujo en dos pasos: credenciales → TOTP. El primer login genera un QR para vincular un autenticador (Google Authenticator, Authy, etc.). Los logins posteriores validan el código TOTP directamente.
-- **Tokens JWT con rotación de refresh tokens** - Access token de corta duración + refresh token rotativo con detección de reutilización. Si se detecta reutilización, se revoca toda la familia de tokens.
-- **Challenges pendientes en Redis** - El estado intermedio del flujo 2FA (entre credenciales y TOTP) se almacena en Redis con TTL configurable y límite de intentos fallidos.
-- **Cifrado AES-256-GCM para secrets TOTP** - Los secrets TOTP nunca se guardan en texto plano; se cifran con una clave de 32 bytes antes de persistirse en la base de datos.
-- **Passwords hasheadas con bcrypt** - Las contraseñas de administradores nunca se almacenan en claro.
-- **Reset de 2FA autenticado** - Un admin puede resetear su autenticador confirmando su contraseña actual. El próximo login solicitará vincular un nuevo QR.
-- **Migraciones con TypeORM** - Esquema versionado. La base de datos se inicializa y actualiza automáticamente al levantar la aplicación.
-- **Seeder de admin inicial** - En entorno `development`, si no existe ningún admin, se crea uno automáticamente con las credenciales definidas en `.env`.
-- **Documentación Swagger** - Disponible en `/api/docs`, protegida con usuario y contraseña configurables.
-- **Rate limiting** - Throttling global para mitigar fuerza bruta.
+## Funcionalidades Principales
 
-## Stack
+- **Gestión Integral de Sorteos (`raffle`)**
+  - Creación, edición y ciclo de vida de sorteos (`draft`, `configured`, `in_progress`, `finished`).
+  - Generación de slugs únicos para la sala de sorteo pública (`publicSlug`) y el panel de ejecución en vivo (`drawSlug`).
 
-| Tecnología | Uso |
+- **Estructura Deportiva Multinivel (`sport`)**
+  - Administración de **Deportes**, **Categorías** (opcionales por deporte) y **Grupos** con capacidad máxima personalizable.
+  - Asignación de equipos a categorías de deporte (`SportCategoryTeam`).
+
+- **Catálogos por Defecto (`default-sport`, `default-category`)**
+  - Plantillas maestrías de deportes y categorías para precargar rápidamente nuevos sorteos.
+
+- **Catálogo de Equipos Globales y Locales (`global-team`, `raffle-team`)**
+  - Registro centralizado de instituciones/facultades con nombre, abreviatura e insignia (`global-team`).
+  - Importación y personalización de equipos participantes dentro de cada sorteo específico (`raffle-team`).
+
+- **Motor de Sorteo en Vivo (`draw`)**
+  - **Selección de Contexto**: Sorteo focalizado por combinación de Deporte + Categoría.
+  - **Sorteo Aleatorio de Equipos y Grupos**: Selección transparente de participantes y asignación a vacantes disponibles.
+  - **Asignación Automática**: Detección inteligente para categorías que cuentan con un único grupo.
+  - **Deshacer por Contexto (`undo`)**: Reversión precisa del último resultado sorteado dentro del deporte y categoría activos, sin afectar el progreso de otras disciplinas.
+
+- **Portal Público y Sincronización**
+  - Endpoint de consulta pública (`/public/:publicSlug`) protegido y optimizado para la transmisión en vivo de resultados agrupados por deporte.
+
+- **Configuración Global del Sistema (`system-config`)**
+  - Personalización de la marca pública: título del portal, banner de encabezado, favicon dinámico y nombre de la pestaña del navegador.
+
+- **Carga de Archivos (`file-upload`)**
+  - Módulo centralizado para subida y eliminación de escudos de equipos, banners corporativos e íconos.
+
+- **Autenticación Segura y 2FA Obligatorio (`admin-auth`)**
+  - Autenticación TOTP (Google Authenticator / Authy) en dos pasos.
+  - Tokens **JWT** (Access Token de corta duración + Refresh Token rotativo con detección de reutilización).
+  - Cifrado **AES-256-GCM** para las claves secretas TOTP en la base de datos.
+  - Almacenamiento de retos temporales (*challenges*) en **Redis** con TTL e intentos limitados.
+  - Contraseñas hasheadas mediante **bcrypt**.
+
+---
+
+## Stack Tecnológico
+
+| Tecnología | Descripción |
 |---|---|
-| NestJS | Framework principal |
-| TypeORM + PostgreSQL | Persistencia |
-| Redis | Challenges 2FA pendientes |
-| JWT (`@nestjs/jwt`) | Access y refresh tokens |
-| bcrypt | Hash de contraseñas |
-| otplib | Generación y validación TOTP |
-| qrcode | Generación de QR para setup 2FA |
-| AES-256-GCM (crypto nativo) | Cifrado de secrets TOTP |
+| **NestJS** | Framework principal para Node.js |
+| **TypeORM + PostgreSQL** | ORM y base de datos relacional |
+| **Redis** | Gestión de sesiones 2FA temporales |
+| **JWT (`@nestjs/jwt`)** | Autenticación basada en tokens |
+| **otplib + qrcode** | Generación y validación de código TOTP / QR |
+| **bcrypt** | Hash seguro de contraseñas |
+| **AES-256-GCM** | Cifrado simétrico para secrets 2FA |
+| **Class Validator / Transformer** | Validación y transformación de DTOs |
 
-## Estructura
+---
+
+## Estructura del Proyecto
+
 
 ```
-src
- ├── admin/              # CRUD de administradores
- ├── admin-auth/         # Login, 2FA setup/confirm/validate/reset, refresh, logout
- ├── refresh-token/      # Persistencia y rotación de refresh tokens
- ├── redis/              # Módulo de conexión a Redis
- └── database/
-      ├── migrations/    # Migraciones TypeORM
-      └── seeders/       # Seeder del admin inicial
+
+src/
+┣ admin/            # CRUD de administradores
+┣ admin-auth/       # Autenticación, 2FA (setup, confirm, validate, reset), JWT y guards
+┣ default-category/ # Catálogo maestro de categorías por defecto
+┣ default-sport/    # Catálogo maestro de deportes por defecto
+┣ draw/             # Motor del sorteo (estado, selección de equipo/grupo, undo, resultados públicos)
+┣ file-upload/      # Subida y eliminación de imágenes
+┣ global-team/      # Registro global de instituciones/equipos
+┣ raffle/           # Gestión de sorteos y estado del torneo
+┣ raffle-team/      # Equipos asignados a un sorteo específico
+┣ refresh-token/    # Persistencia y rotación de refresh tokens
+┣ redis/            # Conexión y almacenamiento en Redis
+┣ sport/            # Entidades e interfaces de Deportes, Categorías y Grupos
+┣ system-config/    # Configuración de marca del portal público
+┗ database/         # Migraciones TypeORM y Seeders iniciales
+
 ```
 
-## Variables de entorno
+---
 
-Copiá `.env.example` a `.env` y completá los valores:
+## Variables de Entorno
+
+Copiá el archivo `.env.example` a `.env` y configurá las variables:
 
 ```bash
 cp .env.example .env
+
 ```
 
-| Variable | Descripción |
-|---|---|
-| `NODE_ENV` | `development` habilita el seeder |
-| `PORT` | Puerto del servidor |
-| `ADMIN_PANEL_URL` | URL del frontend (CORS) |
-| `DB_*` | Conexión PostgreSQL |
-| `JWT_ADMIN_ACCESS_SECRET` | Secret para access tokens de admins |
-| `JWT_ADMIN_REFRESH_SECRET` | Secret para refresh tokens de admins |
-| `JWT_ADMIN_ACCESS_EXPIRES_IN` | Duración del access token (ej: `15m`) |
-| `JWT_ADMIN_REFRESH_EXPIRES_IN` | Duración del refresh token (ej: `1d`) |
-| `TOTP_ENCRYPTION_KEY` | Clave hex de 64 chars para cifrar secrets TOTP |
-| `REDIS_HOST / REDIS_PORT / REDIS_PASSWORD` | Conexión Redis |
-| `PENDING_2FA_TTL_MS` | TTL del challenge pendiente en ms |
-| `PENDING_2FA_MAX_ATTEMPTS` | Intentos TOTP antes de invalidar el challenge |
-| `ADMIN_USERNAME_SEEDER` | Usuario del admin inicial (solo en development) |
-| `ADMIN_PASSWORD_SEEDER` | Contraseña del admin inicial (solo en development) |
-| `SWAGGER_USER / SWAGGER_PASSWORD` | Credenciales para acceder a `/api/docs` |
+```env
+NODE_ENV=development
+PORT=3000
+ADMIN_PANEL_URL=http://localhost:5173
 
-Generá claves seguras con:
+# Base de datos PostgreSQL
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_DATABASE=sorteo_juegos
+
+# JWT Secrets
+JWT_ADMIN_ACCESS_SECRET=tu_access_secret_super_seguro
+JWT_ADMIN_REFRESH_SECRET=tu_refresh_secret_super_seguro
+JWT_ADMIN_ACCESS_EXPIRES_IN=15m
+JWT_ADMIN_REFRESH_EXPIRES_IN=1d
+
+# Cifrado 2FA TOTP (64 caracteres hexadecimales)
+TOTP_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+PENDING_2FA_TTL_MS=300000
+PENDING_2FA_MAX_ATTEMPTS=5
+
+# Seeder Admin Inicial
+ADMIN_USERNAME_SEEDER=admin
+ADMIN_PASSWORD_SEEDER=admin123
+
+```
+
+Para generar una clave hexadecimal de 64 caracteres para `TOTP_ENCRYPTION_KEY`:
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
 ```
 
-## Instalación y ejecución
+---
+
+## Instalación y Comandos
 
 ```bash
+# Instalar dependencias
 npm install
-npm run start:dev   # desarrollo con watch
-npm run start:prod  # producción
+
+# Iniciar en modo desarrollo
+npm run start:dev
+
+# Compilar para producción
+npm run build
+
+# Iniciar en producción
+npm run start:prod
+
 ```
 
-Las migraciones corren automáticamente al iniciar la aplicación.
+### Migraciones de Base de Datos (TypeORM)
 
-## Flujo de autenticación
+```bash
+# Ejecutar migraciones pendientes
+npm run migration:run
 
-```
-POST /admin/auth/login
-  → { pending_token, requires_2fa_setup }
+# Revertir última migración
+npm run migration:revert
 
-# Primera vez (requires_2fa_setup: true):
-POST /admin/auth/2fa/setup    { pending_token }
-  → { qrCodeDataUrl, manualEntrySecret, confirm_pending_token }
-POST /admin/auth/2fa/confirm  { pending_token: confirm_pending_token, totp_code }
-  → { access_token, refresh_token }
+# Generar nueva migración
+npm run migration:generate -- src/database/migrations/NombreDeMigracion
 
-# Logins posteriores:
-POST /admin/auth/2fa/validate { pending_token, totp_code }
-  → { access_token, refresh_token }
-
-# Renovar sesión:
-POST /admin/auth/refresh  { refresh_token }
-  → { access_token, refresh_token }
-
-# Cerrar sesión:
-POST /admin/auth/logout   { refresh_token }
-```
